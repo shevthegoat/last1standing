@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Last One Standing: Strike. Suppress. Secure.</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <style>
+    :root {
+      --bg: #080c0a;
+      --panel: rgba(12, 20, 16, 0.86);
+      --panel-2: rgba(20, 28, 23, 0.9);
+      --green: #3dff88;
+      --red: #ff3d3d;
+      --yellow: #f4d03f;
+      --metal: #9ea7ab;
+      --text: #e9f3ea;
+      --muted: #9fb5a5;
+      --shadow: 0 10px 30px rgba(0,0,0,0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at 20% 20%, #1a281f 0%, #060907 45%, #030504 100%);
+      color: var(--text);
+      font-family: Impact, "Arial Narrow", "Segoe UI", sans-serif;
+      letter-spacing: 0.4px;
+    }
+
+    #smoke {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.4;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(180,180,180,0.12), transparent 45%),
+        radial-gradient(circle at 70% 60%, rgba(180,180,180,0.09), transparent 40%),
+        radial-gradient(circle at 60% 20%, rgba(255,100,100,0.06), transparent 34%),
+        radial-gradient(circle at 40% 80%, rgba(90,160,120,0.10), transparent 40%);
+      animation: smokeMove 16s linear infinite alternate;
+      z-index: 0;
+    }
+
+    @keyframes smokeMove {
+      0% { transform: translate3d(-2%, 1%, 0) scale(1); filter: blur(0px); }
+      50% { transform: translate3d(2%, -1%, 0) scale(1.04); filter: blur(1.5px); }
+      100% { transform: translate3d(-1%, 2%, 0) scale(1.02); filter: blur(0.5px); }
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 2;
+      overflow: auto;
+    }
+
+    .screen.active { display: block; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(130, 180, 150, 0.25);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(5px);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    #titleScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+      padding: 20px;
+      z-index: 5;
+    }
+
+    .title-main {
+      font-size: clamp(2.3rem, 6.5vw, 5.5rem);
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(255,255,255,0.12), 0 0 25px rgba(255,60,60,0.18);
+      letter-spacing: 2px;
+    }
+
+    .title-anim-wrap {
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #titleBlast {
+      font-size: clamp(2.7rem, 8.2vw, 7rem);
+      color: #ffefef;
+      text-shadow: 0 0 10px rgba(255, 60, 60, 0.8), 0 0 35px rgba(255, 30, 30, 0.65);
+      transform: scale(0.5);
+      opacity: 0;
+      font-family: "Rock Salt", Impact, cursive;
+    }
+
+    #titleRest {
+      font-size: clamp(1.5rem, 5.5vw, 4rem);
+      opacity: 0;
+      transform: translateY(30px);
+      text-shadow: 0 0 14px rgba(130, 255, 170, 0.25);
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2.8vw, 1.8rem);
+      color: var(--yellow);
+      text-shadow: 0 0 14px rgba(255, 210, 60, 0.3);
+      letter-spacing: 1.8px;
+    }
+
+    .icons {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0.95;
+    }
+
+    .glow-btn {
+      appearance: none;
+      border: 2px solid rgba(140, 240, 170, 0.7);
+      color: #eaffe8;
+      background:
+        linear-gradient(135deg, rgba(18,42,27,.95), rgba(31,58,38,.95)),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 10px, rgba(0,0,0,0.06) 10px 20px);
+      border-radius: 12px;
+      padding: 16px 30px;
+      font-size: clamp(1.1rem, 3vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+      box-shadow: 0 0 20px rgba(90, 255, 130, 0.2);
+    }
+
+    .glow-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      border-color: rgba(180,255,200,0.95);
+      box-shadow: 0 0 24px rgba(90,255,140,.45), inset 0 0 16px rgba(90,255,140,.1);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-size: 0.94rem;
+    }
+
+    #countryScreen {
+      padding: 16px;
+      z-index: 4;
+    }
+
+    .country-wrap {
+      max-width: 1150px;
+      margin: 10px auto 30px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+    }
+
+    .tier-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    .country-card {
+      background: var(--panel-2);
+      border: 1px solid rgba(180, 180, 180, 0.25);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform .14s ease, border-color .15s ease;
+      min-height: 120px;
+      position: relative;
+    }
+
+    .country-card:hover { transform: translateY(-2px); border-color: rgba(135, 210, 170, 0.8); }
+    .country-card.selected { border-color: var(--green); box-shadow: 0 0 16px rgba(75,255,120,0.28); }
+    .country-card.locked { opacity: 0.8; }
+
+    .badge {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      width: fit-content;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #f4f8f5;
+    }
+
+    #gameScreen { z-index: 1; }
+    #globeContainer { position: fixed; inset: 0; z-index: 1; }
+
+    #hud {
+      position: fixed;
+      left: 10px;
+      top: 10px;
+      z-index: 5;
+      width: min(420px, calc(100vw - 20px));
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    #hud .line { display: flex; justify-content: space-between; gap: 8px; }
+
+    #popup {
+      position: fixed;
+      right: 10px;
+      top: 10px;
+      z-index: 6;
+      width: min(360px, calc(100vw - 20px));
+      padding: 12px;
+      display: none;
+      gap: 9px;
+    }
+
+    .small-btn {
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 11px;
+      background: rgba(40,40,40,0.65);
+      color: white;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .red-btn { background: linear-gradient(120deg, #5f1010, #ba2020); border-color: rgba(255,120,120,0.8); }
+    .green-btn { background: linear-gradient(120deg, #104224, #21763f); border-color: rgba(150,255,180,0.8); }
+
+    #battleModal, #upgradeModal, #winModal {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(0,0,0,0.68);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .modal-card {
+      width: min(1050px, 100%);
+      max-height: 95vh;
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .battle-split {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      margin-top: 10px;
+    }
+
+    .unit-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .unit-row input {
+      width: 92px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(0,0,0,.45);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    #battleLog {
+      margin-top: 12px;
+      min-height: 140px;
+      max-height: 210px;
+      overflow: auto;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(0,0,0,.36);
+      font-family: "Segoe UI", sans-serif;
+      font-size: 0.92rem;
+      line-height: 1.3;
+    }
+
+    .explosion {
+      animation: explode .35s ease;
+    }
+
+    @keyframes explode {
+      0% { transform: scale(1); filter: brightness(1); }
+      30% { transform: scale(1.04); filter: brightness(1.8) saturate(1.4); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    .footer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    @media (max-width: 700px) {
+      #hud { font-size: .92rem; }
+      .country-wrap { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="smoke"></div>
+
+  <section id="titleScreen" class="screen active">
+    <div class="title-anim-wrap">
+      <div id="titleBlast">LAST</div>
+      <div id="titleRest">ONE STANDING</div>
+    </div>
+    <h1 class="title-main">Last One Standing</h1>
+    <div class="subtitle">Strike . Suppress . Secure .</div>
+    <div class="icons">⚔️ 🛡️ 💥 🪖 ✈️ 🌍</div>
+    <button id="playBtn" class="glow-btn">PLAY GAME</button>
+    <p class="muted">Command your nation. Build your military. Conquer the world.</p>
+  </section>
+
+  <section id="countryScreen" class="screen">
+    <div class="country-wrap panel">
+      <h2>Choose Your Country</h2>
+      <p class="muted">Tier A countries have the strongest militaries. Start with free Tier F and earn coins by winning wars to unlock better ones.</p>
+      <div id="tierGrid" class="tier-grid"></div>
+      <div class="footer-actions">
+        <button id="confirmCountry" class="glow-btn">Confirm Selection</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="screen">
+    <div id="globeContainer"></div>
+    <div id="hud" class="panel">
+      <div class="line"><strong>Commander:</strong> <span id="hudCountry">-</span></div>
+      <div class="line"><strong>Coins:</strong> <span id="hudCoins">0</span></div>
+      <div class="line"><strong>Strength:</strong> <span id="hudStrength">0</span></div>
+      <div class="line"><strong>Territories:</strong> <span id="hudTerritories">0</span></div>
+      <div class="line"><strong>Industry Lv:</strong> <span id="hudIndustry">1</span></div>
+      <div class="line"><strong>Tech Lv:</strong> <span id="hudTech">1</span></div>
+      <small class="muted">Tip: Drag to rotate, wheel/pinch to zoom, click glowing city pins to engage.</small>
+    </div>
+    <div id="popup" class="panel"></div>
+  </section>
+
+  <div id="battleModal">
+    <div id="battleCard" class="modal-card panel">
+      <h2>War Theater</h2>
+      <p class="muted" id="battleSubtitle">Choose units and strike each turn.</p>
+      <div class="battle-split">
+        <div class="panel" style="padding:10px;">
+          <h3>Your Assault Orders</h3>
+          <div id="unitInputs"></div>
+          <div class="footer-actions">
+            <button id="attackBtn" class="small-btn red-btn">Launch Attack</button>
+            <button id="surrenderBtn" class="small-btn">Surrender</button>
+          </div>
+        </div>
+        <div class="panel" style="padding:10px;">
+          <h3>Battle Status</h3>
+          <div id="battleStats"></div>
+          <div id="battleLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="upgradeModal">
+    <div class="modal-card panel">
+      <h2>Upgrade Command</h2>
+      <p class="muted">Spend your war spoils to become unstoppable.</p>
+      <div class="battle-split" style="margin-top:10px;">
+        <div class="panel" style="padding:10px;">
+          <h3>Army Upgrade</h3>
+          <p class="muted">+80 base strength</p>
+          <button class="small-btn green-btn" data-up="army">Buy (120 coins)</button>
+        </div>
+        <div class="panel" style="padding:10px;">
+          <h3>Industry Upgrade</h3>
+          <p class="muted">+25% coin rewards</p>
+          <button class="small-btn green-btn" data-up="industry">Buy (160 coins)</button>
+        </div>
+        <div class="panel" style="padding:10px;">
+          <h3>Technology Upgrade</h3>
+          <p class="muted">Missile & jet bonus damage</p>
+          <button class="small-btn green-btn" data-up="tech">Buy (180 coins)</button>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button id="closeUpgrade" class="small-btn">Continue Campaign</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="winModal">
+    <div class="modal-card panel" style="text-align:center;">
+      <h2 style="font-size: clamp(2rem, 7vw, 4rem); color: var(--green);">You are the Last One Standing!</h2>
+      <p class="muted" style="margin-top:8px;">The entire world now flies your colors.</p>
+      <div style="font-size:2rem; margin-top:10px;">🎉 🎆 🌍 🏆</div>
+      <div class="footer-actions" style="justify-content:center;">
+        <button id="restartBtn" class="glow-btn">Start New Campaign</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----------- Core static data (hard-coded per prompt) -----------
+    const COUNTRY_TIERS = {
+      "Tier A": [
+        { name: "United States", flag: "🇺🇸", strength: 1000, leader: "Donald Trump", pop: 342000000 },
+        { name: "Russia", flag: "🇷🇺", strength: 980, leader: "Vladimir Putin", pop: 144000000 },
+        { name: "China", flag: "🇨🇳", strength: 960, leader: "Xi Jinping", pop: 1410000000 },
+        { name: "India", flag: "🇮🇳", strength: 920, leader: "Narendra Modi", pop: 1430000000 },
+        { name: "South Korea", flag: "🇰🇷", strength: 900, leader: "Yoon Suk Yeol", pop: 52000000 }
+      ],
+      "Tier B": [
+        { name: "France", flag: "🇫🇷", strength: 850, leader: "Emmanuel Macron", pop: 65000000 },
+        { name: "Japan", flag: "🇯🇵", strength: 840, leader: "Shigeru Ishiba", pop: 123000000 },
+        { name: "United Kingdom", flag: "🇬🇧", strength: 830, leader: "Keir Starmer", pop: 69000000 },
+        { name: "Türkiye", flag: "🇹🇷", strength: 820, leader: "Recep Tayyip Erdoğan", pop: 86000000 },
+        { name: "Italy", flag: "🇮🇹", strength: 810, leader: "Giorgia Meloni", pop: 59000000 }
+      ],
+      "Tier C": [
+        { name: "Brazil", flag: "🇧🇷", strength: 750, leader: "Luiz Inácio Lula da Silva", pop: 216000000 },
+        { name: "Germany", flag: "🇩🇪", strength: 740, leader: "Olaf Scholz", pop: 84000000 },
+        { name: "Indonesia", flag: "🇮🇩", strength: 730, leader: "Prabowo Subianto", pop: 279000000 },
+        { name: "Pakistan", flag: "🇵🇰", strength: 720, leader: "Shehbaz Sharif", pop: 241000000 },
+        { name: "Israel", flag: "🇮🇱", strength: 710, leader: "Benjamin Netanyahu", pop: 9800000 }
+      ],
+      "Tier D": [
+        { name: "Australia", flag: "🇦🇺", strength: 650, leader: "Anthony Albanese", pop: 27000000 },
+        { name: "Spain", flag: "🇪🇸", strength: 640, leader: "Pedro Sánchez", pop: 49000000 },
+        { name: "Iran", flag: "🇮🇷", strength: 630, leader: "Ali Khamenei", pop: 89000000 }
+      ],
+      "Tier E": [
+        { name: "Canada", flag: "🇨🇦", strength: 520, leader: "Mark Carney", pop: 41000000 },
+        { name: "Mexico", flag: "🇲🇽", strength: 500, leader: "Claudia Sheinbaum", pop: 131000000 }
+      ],
+      "Tier F": [
+        { name: "Costa Rica", flag: "🇨🇷", strength: 280, leader: "Rodrigo Chaves Robles", pop: 5300000, free: true },
+        { name: "Iceland", flag: "🇮🇸", strength: 220, leader: "Bjarni Benediktsson", pop: 390000, free: true },
+        { name: "Luxembourg", flag: "🇱🇺", strength: 180, leader: "Luc Frieden", pop: 680000, free: true }
+      ]
+    };
+
+    const CITY_MAP = {
+      "United States": [
+        ["Washington, D.C.", 38.9072, -77.0369], ["New York", 40.7128, -74.006], ["Los Angeles", 34.0522, -118.2437], ["Chicago", 41.8781, -87.6298], ["Houston", 29.7604, -95.3698]
+      ],
+      "Russia": [["Moscow",55.7558,37.6173],["St. Petersburg",59.9311,30.3609],["Novosibirsk",55.0084,82.9357],["Yekaterinburg",56.8389,60.6057],["Kazan",55.8304,49.0661]],
+      "China": [["Beijing",39.9042,116.4074],["Shanghai",31.2304,121.4737],["Guangzhou",23.1291,113.2644],["Shenzhen",22.5431,114.0579],["Chengdu",30.5728,104.0668]],
+      "India": [["New Delhi",28.6139,77.209],["Mumbai",19.076,72.8777],["Bengaluru",12.9716,77.5946],["Kolkata",22.5726,88.3639],["Chennai",13.0827,80.2707]],
+      "South Korea": [["Seoul",37.5665,126.978],["Busan",35.1796,129.0756],["Incheon",37.4563,126.7052],["Daegu",35.8714,128.6014],["Daejeon",36.3504,127.3845]],
+      "France": [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698]],
+      "Japan": [["Tokyo",35.6762,139.6503],["Osaka",34.6937,135.5023],["Nagoya",35.1815,136.9066]],
+      "United Kingdom": [["London",51.5072,-0.1276],["Manchester",53.4808,-2.2426],["Birmingham",52.4862,-1.8904]],
+      "Türkiye": [["Ankara",39.9334,32.8597],["Istanbul",41.0082,28.9784],["Izmir",38.4237,27.1428]],
+      "Italy": [["Rome",41.9028,12.4964],["Milan",45.4642,9.19],["Naples",40.8518,14.2681]],
+      "Brazil": [["Brasília",-15.7939,-47.8828],["São Paulo",-23.5558,-46.6396],["Rio",-22.9068,-43.1729]],
+      "Germany": [["Berlin",52.52,13.405],["Hamburg",53.5511,9.9937],["Munich",48.1351,11.582]],
+      "Indonesia": [["Jakarta",-6.2088,106.8456],["Surabaya",-7.2575,112.7521],["Bandung",-6.9175,107.6191]],
+      "Pakistan": [["Islamabad",33.6844,73.0479],["Karachi",24.8607,67.0011],["Lahore",31.5497,74.3436]],
+      "Israel": [["Jerusalem",31.7683,35.2137],["Tel Aviv",32.0853,34.7818],["Haifa",32.794,34.9896]],
+      "Australia": [["Canberra",-35.2809,149.13],["Sydney",-33.8688,151.2093],["Melbourne",-37.8136,144.9631]],
+      "Spain": [["Madrid",40.4168,-3.7038],["Barcelona",41.3851,2.1734],["Valencia",39.4699,-0.3763]],
+      "Iran": [["Tehran",35.6892,51.389],["Mashhad",36.2605,59.6168],["Isfahan",32.6546,51.668]],
+      "Canada": [["Ottawa",45.4215,-75.6972],["Toronto",43.6532,-79.3832],["Vancouver",49.2827,-123.1207]],
+      "Mexico": [["Mexico City",19.4326,-99.1332],["Guadalajara",20.6597,-103.3496],["Monterrey",25.6866,-100.3161]],
+      "Costa Rica": [["San José",9.9281,-84.0907],["Limón",9.99,-83.03],["Alajuela",10.0163,-84.2116]],
+      "Iceland": [["Reykjavík",64.1466,-21.9426],["Akureyri",65.6885,-18.1262],["Keflavík",63.9998,-22.5584]],
+      "Luxembourg": [["Luxembourg City",49.6116,6.1319],["Esch-sur-Alzette",49.4958,5.9806],["Differdange",49.5242,5.8914]]
+    };
+
+    const units = ["Ground Troops", "Tanks", "Fighter Jets", "Bombers", "Missiles"];
+    const unitPower = {
+      "Ground Troops": 1,
+      "Tanks": 1.35,
+      "Fighter Jets": 1.5,
+      "Bombers": 1.45,
+      "Missiles": 1.7
+    };
+
+    const counters = {
+      "Tanks": "Ground Troops",
+      "Missiles": "Tanks",
+      "Fighter Jets": "Bombers",
+      "Bombers": "Ground Troops",
+      "Ground Troops": "Missiles"
+    };
+
+    let gameState = {
+      coins: 0,
+      selectedCountry: null,
+      player: null,
+      conquered: [],
+      owned: {},
+      atWar: false,
+      currentEnemy: null,
+      turn: 1,
+      maxTurns: 5,
+      upgrades: { army: 1, industry: 1, tech: 1 },
+      titlePlayed: false
+    };
+
+    // ----------- Utility -----------
+    const $ = (id) => document.getElementById(id);
+
+    function formatNumber(n) {
+      return new Intl.NumberFormat().format(Math.round(n));
+    }
+
+    function allCountries() {
+      return Object.entries(COUNTRY_TIERS).flatMap(([tier, arr]) => arr.map(c => ({ ...c, tier })));
+    }
+
+    function saveGame() {
+      localStorage.setItem("los_campaign", JSON.stringify(gameState));
+    }
+
+    function loadGame() {
+      const raw = localStorage.getItem("los_campaign");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        gameState = { ...gameState, ...data };
+      } catch {}
+    }
+
+    function resetCampaign() {
+      localStorage.removeItem("los_campaign");
+      location.reload();
+    }
+
+    // ----------- Sound FX (WebAudio synthesis) -----------
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBoom(freq = 80, duration = 0.35, gain = 0.38) {
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const noise = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const amp = audioCtx.createGain();
+
+      const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+
+      noise.buffer = buffer;
+      filter.type = "lowpass";
+      filter.frequency.value = 420;
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + duration);
+
+      amp.gain.setValueAtTime(0.001, now);
+      amp.gain.exponentialRampToValueAtTime(gain, now + 0.02);
+      amp.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(amp);
+      noise.connect(filter);
+      filter.connect(amp);
+      amp.connect(audioCtx.destination);
+
+      osc.start(now);
+      noise.start(now);
+      osc.stop(now + duration);
+      noise.stop(now + duration);
+    }
+
+    function playVictory() {
+      const now = audioCtx.currentTime;
+      [440, 554, 659, 880].forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.value = f;
+        g.gain.setValueAtTime(0.001, now + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.13, now + i * 0.12 + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.24);
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.25);
+      });
+    }
+
+    // ----------- UI flow -----------
+    function showScreen(id) {
+      ["titleScreen", "countryScreen", "gameScreen"].forEach(s => $(s).classList.remove("active"));
+      $(id).classList.add("active");
+    }
+
+    function runTitleAnimation() {
+      if (sessionStorage.getItem("los_intro_once")) {
+        $("titleBlast").style.opacity = 1;
+        $("titleBlast").style.transform = "scale(1)";
+        $("titleRest").style.opacity = 1;
+        $("titleRest").style.transform = "translateY(0)";
+        return;
+      }
+      sessionStorage.setItem("los_intro_once", "1");
+      const blast = $("titleBlast");
+      const rest = $("titleRest");
+      setTimeout(() => {
+        blast.style.transition = "all .45s cubic-bezier(.2,.75,.2,1.2)";
+        blast.style.opacity = 1;
+        blast.style.transform = "scale(1.18)";
+        playBoom(95, 0.4, 0.45);
+        setTimeout(() => {
+          blast.style.transform = "scale(1)";
+          rest.style.transition = "all .4s ease";
+          rest.style.opacity = 1;
+          rest.style.transform = "translateY(0)";
+          playBoom(70, 0.45, 0.4);
+        }, 420);
+      }, 260);
+    }
+
+    // ----------- Country selection -----------
+    function buildCountryCards() {
+      const grid = $("tierGrid");
+      grid.innerHTML = "";
+      const coins = gameState.coins || 0;
+
+      Object.entries(COUNTRY_TIERS).forEach(([tier, list]) => {
+        list.forEach(country => {
+          const cost = Math.max(0, Math.round(country.strength * 0.65));
+          const free = tier === "Tier F";
+          const unlocked = free || coins >= cost || gameState.conquered.includes(country.name);
+          const card = document.createElement("div");
+          card.className = "country-card" + (unlocked ? "" : " locked");
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <h3>${country.flag} ${country.name}</h3>
+              <span class="badge">${tier}</span>
+            </div>
+            <div><strong>Military:</strong> ${country.strength}/1000</div>
+            <div class="muted">${free ? "Free" : unlocked ? `Cost: ${cost} coins` : `Locked • Need ${cost} coins`}</div>
+          `;
+          card.addEventListener("click", () => {
+            if (!unlocked) return;
+            document.querySelectorAll(".country-card").forEach(c => c.classList.remove("selected"));
+            card.classList.add("selected");
+            gameState.selectedCountry = country.name;
+          });
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    // ----------- Three.js globe -----------
+    let scene, camera, renderer, globe, raycaster, mouse, pins = [], globeReady = false;
+    let drag = { active: false, x: 0, y: 0 };
+
+    function latLonToVec3(lat, lon, radius = 2.02) {
+      const phi = (90 - lat) * Math.PI / 180;
+      const theta = (lon + 180) * Math.PI / 180;
+      return new THREE.Vector3(
+        -(radius * Math.sin(phi) * Math.cos(theta)),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    function initGlobe() {
+      if (globeReady) return;
+      const container = $("globeContainer");
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 1000);
+      camera.position.z = 5.5;
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1.05);
+      light.position.set(4, 3, 5);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x668877, 0.45));
+
+      const geo = new THREE.SphereGeometry(2, 64, 64);
+      const tex = new THREE.TextureLoader().load(
+        "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg"
+      );
+      const mat = new THREE.MeshPhongMaterial({ map: tex, shininess: 12, specular: new THREE.Color("#444") });
+      globe = new THREE.Mesh(geo, mat);
+      scene.add(globe);
+
+      const glow = new THREE.Mesh(
+        new THREE.SphereGeometry(2.07, 48, 48),
+        new THREE.MeshBasicMaterial({ color: 0x59a6ff, transparent: true, opacity: 0.11, side: THREE.BackSide })
+      );
+      scene.add(glow);
+
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      renderer.domElement.addEventListener("pointerdown", e => { drag.active = true; drag.x = e.clientX; drag.y = e.clientY; });
+      renderer.domElement.addEventListener("pointerup", () => drag.active = false);
+      renderer.domElement.addEventListener("pointermove", e => {
+        if (!drag.active) return;
+        const dx = e.clientX - drag.x;
+        const dy = e.clientY - drag.y;
+        drag.x = e.clientX; drag.y = e.clientY;
+        globe.rotation.y += dx * 0.005;
+        globe.rotation.x += dy * 0.003;
+        globe.rotation.x = Math.max(-0.55, Math.min(0.55, globe.rotation.x));
+      });
+
+      renderer.domElement.addEventListener("wheel", e => {
+        camera.position.z += e.deltaY * 0.002;
+        camera.position.z = Math.max(3.2, Math.min(8.5, camera.position.z));
+      }, { passive: true });
+
+      renderer.domElement.addEventListener("click", onGlobeClick);
+      window.addEventListener("resize", onResize);
+
+      createCityPins();
+      animate();
+      globeReady = true;
+    }
+
+    function createCityPins() {
+      pins.forEach(p => globe.remove(p.mesh));
+      pins = [];
+      const all = allCountries();
+      all.forEach(country => {
+        (CITY_MAP[country.name] || []).forEach((c, idx) => {
+          const [city, lat, lon] = c;
+          const pos = latLonToVec3(lat, lon, 2.03);
+          const color = gameState.owned[country.name] ? 0x3dff88 : 0xff5050;
+          const pin = new THREE.Mesh(
+            new THREE.SphereGeometry(0.026 + idx * 0.002, 8, 8),
+            new THREE.MeshBasicMaterial({ color })
+          );
+          pin.position.copy(pos);
+          pin.userData = { city, country: country.name };
+          globe.add(pin);
+          pins.push({ mesh: pin, data: pin.userData });
+        });
+      });
+    }
+
+    function onGlobeClick(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(pins.map(p => p.mesh));
+      if (!intersects.length) return;
+      const data = intersects[0].object.userData;
+      showCityPopup(data.country, data.city);
+    }
+
+    function focusCountry(countryName) {
+      const city = (CITY_MAP[countryName] && CITY_MAP[countryName][0]) || ["", 0, 0];
+      const v = latLonToVec3(city[1], city[2], 2);
+      const targetY = Math.atan2(v.x, v.z);
+      const targetX = Math.asin(v.y / 2);
+      globe.rotation.y = targetY;
+      globe.rotation.x = -targetX;
+    }
+
+    function onResize() {
+      if (!renderer) return;
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (!drag.active) globe.rotation.y += 0.0009;
+      renderer.render(scene, camera);
+    }
+
+    // ----------- HUD / Popup -----------
+    function refreshHUD() {
+      if (!gameState.player) return;
+      $("hudCountry").textContent = `${gameState.player.flag} ${gameState.player.name}`;
+      $("hudCoins").textContent = formatNumber(gameState.coins);
+      $("hudStrength").textContent = `${Math.max(0, Math.round(gameState.player.strength))}/1000+`;
+      $("hudTerritories").textContent = formatNumber(gameState.conquered.length || 1);
+      $("hudIndustry").textContent = gameState.upgrades.industry;
+      $("hudTech").textContent = gameState.upgrades.tech;
+    }
+
+    function showCityPopup(countryName, cityName) {
+      const country = allCountries().find(c => c.name === countryName);
+      if (!country) return;
+      const popup = $("popup");
+      const isOwned = !!gameState.owned[countryName];
+      const canWar = !gameState.atWar && !isOwned && gameState.player.name !== countryName;
+
+      popup.innerHTML = `
+        <h3>${country.flag} ${countryName}</h3>
+        <div><strong>City:</strong> ${cityName}</div>
+        <div><strong>Population:</strong> ${formatNumber(country.pop)}</div>
+        <div><strong>Leader (2026):</strong> ${country.leader}</div>
+        <div><strong>Military Strength:</strong> ${country.strength}/1000</div>
+        <div class="footer-actions">
+          ${canWar ? '<button id="declareWar" class="small-btn red-btn">DECLARE WAR</button>' : '<button class="small-btn" disabled>Unavailable</button>'}
+          <button id="closePopup" class="small-btn">Close</button>
+        </div>
+      `;
+      popup.style.display = "grid";
+
+      $("closePopup").onclick = () => popup.style.display = "none";
+      if (canWar) {
+        $("declareWar").onclick = () => {
+          popup.style.display = "none";
+          startWar(country);
+        };
+      }
+    }
+
+    // ----------- War system -----------
+    let battle = null;
+    function startWar(enemyCountry) {
+      gameState.atWar = true;
+      gameState.currentEnemy = enemyCountry.name;
+      gameState.turn = 1;
+
+      battle = {
+        enemy: { ...enemyCountry, hp: enemyCountry.strength + 120 },
+        playerHp: gameState.player.strength + 150 + (gameState.upgrades.army - 1) * 60,
+        log: []
+      };
+
+      const inputs = $("unitInputs");
+      inputs.innerHTML = "";
+      units.forEach(u => {
+        const row = document.createElement("div");
+        row.className = "unit-row";
+        row.innerHTML = `<label>${u}</label><input type="number" min="0" max="90" value="10" data-unit="${u}" />`;
+        inputs.appendChild(row);
+      });
+
+      $("battleModal").style.display = "flex";
+      refreshBattleStats();
+      logBattle(`⚠️ WAR DECLARED on ${enemyCountry.flag} ${enemyCountry.name}!`);
+      playBoom(85, 0.42, 0.45);
+    }
+
+    function logBattle(text) {
+      battle.log.push(text);
+      const el = $("battleLog");
+      el.innerHTML = battle.log.map(l => `<div>${l}</div>`).join("");
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function refreshBattleStats() {
+      $("battleStats").innerHTML = `
+        <div><strong>Turn:</strong> ${gameState.turn} / ${gameState.maxTurns}</div>
+        <div><strong>Your Force Power:</strong> ${Math.max(0, Math.round(battle.playerHp))}</div>
+        <div><strong>Enemy Power:</strong> ${Math.max(0, Math.round(battle.enemy.hp))}</div>
+      `;
+      $("battleCard").classList.add("explosion");
+      setTimeout(() => $("battleCard").classList.remove("explosion"), 220);
+    }
+
+    function computeAttackFromInputs() {
+      const vals = [...document.querySelectorAll("#unitInputs input")];
+      let total = 0;
+      const sent = {};
+      vals.forEach(i => {
+        const unit = i.dataset.unit;
+        const qty = Math.max(0, Number(i.value || 0));
+        sent[unit] = qty;
+        total += qty * unitPower[unit];
+      });
+
+      // tech upgrades boost missiles/jets for fun progression
+      total += (sent["Missiles"] * 0.45 + sent["Fighter Jets"] * 0.3) * (gameState.upgrades.tech - 1);
+      return { total, sent };
+    }
+
+    function randomEnemyAttack() {
+      const sent = {};
+      let total = 0;
+      units.forEach(u => {
+        const qty = Math.floor(6 + Math.random() * 20);
+        sent[u] = qty;
+        total += qty * unitPower[u] * (0.8 + Math.random() * 0.5);
+      });
+      return { total, sent };
+    }
+
+    function applyCounterBonus(attackA, attackB) {
+      let bonusA = 0;
+      let bonusB = 0;
+      units.forEach(u => {
+        const counter = counters[u];
+        const aQty = attackA.sent[u] || 0;
+        const bCounterQty = attackB.sent[counter] || 0;
+        if (aQty > bCounterQty) bonusA += (aQty - bCounterQty) * 0.35;
+
+        const bQty = attackB.sent[u] || 0;
+        const aCounterQty = attackA.sent[counter] || 0;
+        if (bQty > aCounterQty) bonusB += (bQty - aCounterQty) * 0.35;
+      });
+      return [bonusA, bonusB];
+    }
+
+    function resolveTurn() {
+      if (!battle || gameState.turn > gameState.maxTurns) return;
+      const playerAtk = computeAttackFromInputs();
+      const enemyAtk = randomEnemyAttack();
+      const [pb, eb] = applyCounterBonus(playerAtk, enemyAtk);
+
+      const playerDamage = playerAtk.total + pb;
+      const enemyDamage = enemyAtk.total + eb;
+
+      battle.enemy.hp -= playerDamage;
+      battle.playerHp -= enemyDamage;
+
+      playBoom(65 + Math.random() * 30, 0.25 + Math.random() * 0.2, 0.25);
+      logBattle(`Turn ${gameState.turn}: You dealt ${Math.round(playerDamage)} damage. Enemy dealt ${Math.round(enemyDamage)}.`);
+
+      if (battle.enemy.hp <= 0) {
+        winWar();
+        return;
+      }
+      if (battle.playerHp <= 0 || gameState.turn >= gameState.maxTurns) {
+        loseWar();
+        return;
+      }
+
+      gameState.turn += 1;
+      refreshBattleStats();
+      saveGame();
+    }
+
+    function winWar() {
+      const enemyName = battle.enemy.name;
+      const rewardBase = Math.round((battle.enemy.strength * 0.8) + 100);
+      const reward = Math.round(rewardBase * (1 + (gameState.upgrades.industry - 1) * 0.25));
+      gameState.coins += reward;
+      gameState.player.strength += Math.round(battle.enemy.strength * 0.16);
+
+      if (!gameState.conquered.includes(enemyName)) gameState.conquered.push(enemyName);
+      gameState.owned[enemyName] = true;
+      createCityPins();
+
+      logBattle(`✅ Victory! ${enemyName} has fallen. +${reward} coins and military growth gained.`);
+      playBoom(95, 0.5, 0.45);
+      setTimeout(() => {
+        endWar();
+        openUpgradeMenu();
+        checkWinCondition();
+      }, 780);
+    }
+
+    function loseWar() {
+      const penalty = Math.max(60, Math.round(battle.enemy.strength * 0.15));
+      gameState.player.strength = Math.max(120, gameState.player.strength - penalty);
+      logBattle(`❌ Defeat. You lost ${penalty} military power.`);
+      setTimeout(endWar, 850);
+    }
+
+    function surrenderWar() {
+      if (!battle) return;
+      logBattle("🏳️ You surrendered. Retreat initiated.");
+      gameState.player.strength = Math.max(100, gameState.player.strength - 40);
+      setTimeout(endWar, 450);
+    }
+
+    function endWar() {
+      battle = null;
+      gameState.atWar = false;
+      gameState.currentEnemy = null;
+      $("battleModal").style.display = "none";
+      refreshHUD();
+      saveGame();
+    }
+
+    // ----------- upgrades / win -----------
+    function openUpgradeMenu() {
+      $("upgradeModal").style.display = "flex";
+    }
+
+    function buyUpgrade(type) {
+      const costs = { army: 120, industry: 160, tech: 180 };
+      const c = costs[type];
+      if (gameState.coins < c) return alert("Not enough coins!");
+      gameState.coins -= c;
+      gameState.upgrades[type] += 1;
+
+      if (type === "army") gameState.player.strength += 80;
+      refreshHUD();
+      saveGame();
+    }
+
+    function checkWinCondition() {
+      const needed = allCountries().length - 1; // exclude starter
+      if (gameState.conquered.length >= needed) {
+        $("winModal").style.display = "flex";
+        playVictory();
+      }
+    }
+
+    // ----------- Start / Resume gameplay -----------
+    function startGameWithSelected() {
+      const selected = allCountries().find(c => c.name === gameState.selectedCountry);
+      if (!selected) return alert("Select a country first.");
+
+      if (!gameState.player || gameState.player.name !== selected.name) {
+        gameState.player = { ...selected };
+        gameState.owned = { [selected.name]: true };
+        gameState.conquered = [];
+        if (!gameState.coins) gameState.coins = 0;
+        gameState.upgrades = gameState.upgrades || { army: 1, industry: 1, tech: 1 };
+      }
+
+      showScreen("gameScreen");
+      initGlobe();
+      createCityPins();
+      focusCountry(selected.name);
+      refreshHUD();
+      saveGame();
+    }
+
+    function resumeIfSaved() {
+      if (!gameState.player) return false;
+      showScreen("gameScreen");
+      initGlobe();
+      createCityPins();
+      focusCountry(gameState.player.name);
+      refreshHUD();
+      return true;
+    }
+
+    // ----------- Event hookups -----------
+    $("playBtn").addEventListener("click", async () => {
+      await audioCtx.resume();
+      if (!resumeIfSaved()) {
+        showScreen("countryScreen");
+        buildCountryCards();
+      }
+    });
+
+    $("confirmCountry").addEventListener("click", () => {
+      startGameWithSelected();
+    });
+
+    $("attackBtn").addEventListener("click", resolveTurn);
+    $("surrenderBtn").addEventListener("click", surrenderWar);
+
+    document.querySelectorAll("[data-up]").forEach(btn => {
+      btn.addEventListener("click", () => buyUpgrade(btn.dataset.up));
+    });
+
+    $("closeUpgrade").addEventListener("click", () => {
+      $("upgradeModal").style.display = "none";
+      refreshHUD();
+      saveGame();
+    });
+
+    $("restartBtn").addEventListener("click", resetCampaign);
+
+    // Boot
+    loadGame();
+    runTitleAnimation();
+  </script>
+</body>
+</html>
